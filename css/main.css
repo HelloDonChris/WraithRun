@@ -1,0 +1,51 @@
+html, body {
+  margin: 0;
+  overflow: hidden;
+  background: #333;
+  font-family: 'Arial', sans-serif;
+}
+
+canvas {
+  display: block;
+  background: #333;
+  width: 100vw;
+  height: 100vh;
+  position: absolute;
+  top: 0;
+  left: 0;
+}
+
+/* Energy Bar */
+#energyBar {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  width: 200px;
+  height: 20px;
+  border: 2px solid white;
+  background: #333;
+  border-radius: 4px;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+}
+
+#energyFill {
+  height: 100%;
+  background: limegreen;
+  width: 100%;
+  border-radius: 2px;
+  transition: width 0.2s ease;
+}
+
+/* Game UI Elements */
+.ui-element {
+  position: fixed;
+  z-index: 1000;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  #energyBar {
+    width: 150px;
+    height: 15px;
+  }
+} 

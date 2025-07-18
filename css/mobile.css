@@ -1,0 +1,58 @@
+/* Mobile Controls - Hidden for now */
+#mobileControls {
+  position: fixed;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: none; /* Hidden */
+  gap: 20px;
+  align-items: center;
+  z-index: 1000;
+}
+
+#joystick {
+  width: 120px;
+  height: 120px;
+  background: rgba(255, 255, 255, 0.2);
+  border: 2px solid rgba(255, 255, 255, 0.5);
+  border-radius: 50%;
+  position: relative;
+  touch-action: none;
+  backdrop-filter: blur(10px);
+}
+
+#joystickKnob {
+  width: 40px;
+  height: 40px;
+  background: rgba(0, 255, 255, 0.8);
+  border-radius: 50%;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+  box-shadow: 0 0 10px cyan;
+  transition: transform 0.1s ease;
+}
+
+/* Touch feedback */
+#joystick:active {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+/* Mobile-specific adjustments */
+@media (max-width: 768px) {
+  #mobileControls {
+    bottom: 10px;
+  }
+  
+  #joystick {
+    width: 100px;
+    height: 100px;
+  }
+  
+  #joystickKnob {
+    width: 35px;
+    height: 35px;
+  }
+} 
