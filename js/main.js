@@ -6,20 +6,11 @@ class Game {
     
     // Game state
     this.isRunning = false;
+    this.gameState = 'playing'; // 'playing', 'gameOver', 'victory'
     this.lastTime = 0;
     this.fps = 60;
     
-    // Performance monitoring
-    this.performanceStats = {
-      frameCount: 0,
-      totalFrameTime: 0,
-      updateTime: 0,
-      renderTime: 0,
-      avgFps: 60,
-      minFps: 60,
-      maxFps: 60,
-      lastStatsUpdate: 0
-    };
+
     
     // Game systems
     this.camera = new Camera();
@@ -42,46 +33,53 @@ class Game {
   }
 
   init() {
-    console.log("Initializing game...");
+    console.log("🎮 GAME INIT: Starting initialization...");
     
     try {
       // Set canvas to full screen resolution
+      console.log("🎮 GAME INIT: Resizing canvas...");
       this.resizeCanvas();
-      console.log("Canvas resized");
+      console.log("✅ GAME INIT: Canvas resized successfully");
       
       // Initialize game systems
+      console.log("🎮 GAME INIT: Initializing camera...");
       this.camera.resize(this.canvas);
-      console.log("Camera initialized");
+      console.log("✅ GAME INIT: Camera initialized successfully");
       
       // Generate map
-      console.log("Creating map...");
+      console.log("🎮 GAME INIT: Creating map...");
       this.map = new Map(this.config.mapWidth, this.config.mapHeight);
-      console.log("Map created successfully");
+      console.log("✅ GAME INIT: Map created successfully");
       
       // Create player at entrance
-      console.log("Creating player...");
+      console.log("🎮 GAME INIT: Creating player...");
       const startPos = this.map.getPlayerStartPosition();
       this.player = new Player(startPos.x, startPos.y);
-      console.log("Player created at:", startPos);
+      console.log("✅ GAME INIT: Player created at:", startPos);
       
       // Create wraiths (pass the map directly)
-      console.log("Creating wraiths...");
+      console.log("🎮 GAME INIT: Creating wraiths...");
       this.wraithManager = new WraithManager(this.config.mapWidth, this.config.mapHeight, this.map);
-      console.log("Wraiths created");
+      console.log("✅ GAME INIT: Wraiths created");
       
       // Setup resize handler
+      console.log("🎮 GAME INIT: Setting up resize handler...");
       window.addEventListener('resize', () => {
+        console.log("🔄 RESIZE: Window resized, updating game...");
         // Update config dimensions to match new window size
         this.config.mapWidth = window.innerWidth;
         this.config.mapHeight = window.innerHeight;
         
         this.resizeCanvas();
         this.camera.resize(this.canvas);
+        console.log("✅ RESIZE: Game updated for new window size");
       });
+      console.log("✅ GAME INIT: Resize handler set up");
       
       // Start the game loop
-      console.log("Starting game loop...");
+      console.log("🎮 GAME INIT: Starting game loop...");
       this.start();
+      console.log("✅ GAME INIT: Game initialization complete!");
     } catch (error) {
       console.error("Error during game initialization:", error);
       console.error("Stack trace:", error.stack);
@@ -89,9 +87,11 @@ class Game {
   }
 
   start() {
+    console.log("🚀 GAME START: Starting game loop...");
     this.isRunning = true;
     this.lastTime = performance.now();
     this.gameLoop();
+    console.log("✅ GAME START: Game loop initiated");
   }
 
   stop() {
@@ -107,36 +107,28 @@ class Game {
       this.fps = 1000 / deltaTime;
       this.lastTime = currentTime;
 
-      // Performance monitoring
-      const frameStartTime = performance.now();
-      
       // Update game systems
-      const updateStartTime = performance.now();
       this.update(deltaTime);
-      this.performanceStats.updateTime = performance.now() - updateStartTime;
       
       // Render the game
-      const renderStartTime = performance.now();
       this.render();
-      this.performanceStats.renderTime = performance.now() - renderStartTime;
-      
-      // Update performance statistics
-      this.updatePerformanceStats(performance.now() - frameStartTime);
 
       // Continue the loop
       requestAnimationFrame((time) => this.gameLoop(time));
     } catch (error) {
       console.error("Game loop error:", error);
-      // Try to recover by restarting
-      setTimeout(() => {
-        if (this.isRunning) {
-          this.restart();
-        }
-      }, 1000);
+      console.error("Stack trace:", error.stack);
+      // Stop the game loop to prevent infinite errors
+      this.isRunning = false;
     }
   }
 
   update(deltaTime) {
+    // Only update game if still playing
+    if (this.gameState !== 'playing') {
+      return;
+    }
+
     // Update player
     this.player.update(this.input, this.map);
     
@@ -184,14 +176,26 @@ class Game {
     this.camera.restore(this.ctx);
   }
 
-  // Toggle debug mode
-  toggleDebug() {
-    this.config.debug = !this.config.debug;
+  // Handle game over/victory
+  finishGame(isVictory) {
+    console.log(`🎯 GAME FINISH: ${isVictory ? 'Victory!' : 'Game Over!'}`);
+    
+    // Set game state to prevent further updates
+    this.gameState = isVictory ? 'victory' : 'gameOver';
+    
+    // Show game over modal
+    this.ui.showGameOverModal(isVictory, () => {
+      // Restart callback
+      this.restartGame();
+    });
   }
 
-  // Restart the game
-  restart() {
-    this.stop();
+  // Restart the game (reset game state)
+  restartGame() {
+    console.log("🔄 RESTART: Restarting game...");
+    
+    // Reset game state
+    this.gameState = 'playing';
     
     // Reinitialize game systems
     this.map = new Map(this.config.mapWidth, this.config.mapHeight);
@@ -199,7 +203,17 @@ class Game {
     this.player = new Player(startPos.x, startPos.y);
     this.wraithManager = new WraithManager(this.config.mapWidth, this.config.mapHeight, this.map);
     
-    this.start();
+    console.log("✅ RESTART: Game restarted successfully");
+  }
+
+  // Toggle debug mode
+  toggleDebug() {
+    this.config.debug = !this.config.debug;
+  }
+
+  // Legacy restart method (for keyboard shortcut compatibility)
+  restart() {
+    this.restartGame();
   }
 
   // Generate new map without restarting game
@@ -217,52 +231,6 @@ class Game {
     this.wraithManager = new WraithManager(this.config.mapWidth, this.config.mapHeight, this.map);
     
     this.ui.showMessage("New map generated! Press G to generate another.", 'info');
-  }
-
-  // Update performance statistics and adaptive features
-  updatePerformanceStats(frameTime) {
-    this.performanceStats.frameCount++;
-    this.performanceStats.totalFrameTime += frameTime;
-    
-    // Update FPS tracking
-    this.performanceStats.minFps = Math.min(this.performanceStats.minFps, this.fps);
-    this.performanceStats.maxFps = Math.max(this.performanceStats.maxFps, this.fps);
-    
-    // Calculate average FPS every second
-    const currentTime = performance.now();
-    if (currentTime - this.performanceStats.lastStatsUpdate > 1000) {
-      this.performanceStats.avgFps = this.performanceStats.frameCount;
-      this.performanceStats.frameCount = 0;
-      this.performanceStats.lastStatsUpdate = currentTime;
-      
-      // Auto-enable performance mode if FPS is consistently low
-      if (this.performanceStats.avgFps < 45 && !this.config.performanceMode) {
-        this.config.performanceMode = true;
-        console.log("Performance mode enabled automatically due to low FPS");
-        if (this.config.debug) {
-          this.ui.showMessage("Performance mode enabled", 'info');
-        }
-      }
-      
-      // Reset min/max FPS tracking
-      this.performanceStats.minFps = this.fps;
-      this.performanceStats.maxFps = this.fps;
-    }
-  }
-
-  // Get performance statistics
-  getPerformanceStats() {
-    return {
-      ...this.performanceStats,
-      currentFps: Math.round(this.fps),
-      performanceMode: this.config.performanceMode
-    };
-  }
-
-  // Toggle performance mode manually
-  togglePerformanceMode() {
-    this.config.performanceMode = !this.config.performanceMode;
-    console.log(`Performance mode ${this.config.performanceMode ? 'enabled' : 'disabled'}`);
   }
 
   // Resize canvas to fill screen
@@ -285,8 +253,65 @@ class Game {
 // Global game instance
 let game;
 
+// Track network requests that might cause loading spinner
+let networkRequestCount = 0;
+const originalFetch = window.fetch;
+window.fetch = function(...args) {
+  networkRequestCount++;
+  console.log(`🌐 NETWORK: Request #${networkRequestCount} - ${args[0]}`);
+  return originalFetch.apply(this, args);
+};
+
+// Track setInterval and setTimeout
+let intervalCount = 0;
+let timeoutCount = 0;
+const originalSetInterval = window.setInterval;
+const originalSetTimeout = window.setTimeout;
+
+window.setInterval = function(callback, delay) {
+  intervalCount++;
+  console.log(`⏰ INTERVAL: Created interval #${intervalCount} with delay ${delay}ms`);
+  return originalSetInterval.apply(this, arguments);
+};
+
+window.setTimeout = function(callback, delay) {
+  timeoutCount++;
+  console.log(`⏰ TIMEOUT: Created timeout #${timeoutCount} with delay ${delay}ms`);
+  return originalSetTimeout.apply(this, arguments);
+};
+
+// Track XMLHttpRequest
+const originalXHR = window.XMLHttpRequest;
+window.XMLHttpRequest = function() {
+  const xhr = new originalXHR();
+  const originalOpen = xhr.open;
+  xhr.open = function(method, url) {
+    console.log(`🌐 XHR: ${method} ${url}`);
+    return originalOpen.apply(this, arguments);
+  };
+  return xhr;
+};
+
+// Track image loading
+const originalImage = window.Image;
+window.Image = function() {
+  const img = new originalImage();
+  const originalSrc = Object.getOwnPropertyDescriptor(HTMLImageElement.prototype, 'src');
+  Object.defineProperty(img, 'src', {
+    set: function(value) {
+      console.log(`🖼️ IMAGE: Loading ${value}`);
+      originalSrc.set.call(this, value);
+    },
+    get: function() {
+      return originalSrc.get.call(this);
+    }
+  });
+  return img;
+};
+
 // Initialize the game when the page loads
 document.addEventListener('DOMContentLoaded', () => {
+  console.log("📄 DOM: Content loaded, initializing game...");
   game = new Game();
   
   // Make game accessible globally for debugging
@@ -299,14 +324,6 @@ document.addEventListener('DOMContentLoaded', () => {
       e.preventDefault();
       game.toggleDebug();
     }
-    if (e.key === 'F2') {
-      e.preventDefault();
-      game.togglePerformanceMode();
-    }
-    if (e.key === 'F3') {
-      e.preventDefault();
-      game.ui.showPerformanceStats();
-    }
     if (e.key === 'R' && e.ctrlKey) {
       e.preventDefault();
       game.restart();
@@ -316,4 +333,6 @@ document.addEventListener('DOMContentLoaded', () => {
       game.generateNewMap();
     }
   });
+  
+  console.log("✅ DOM: Game initialization complete");
 }); 

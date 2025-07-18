@@ -104,8 +104,11 @@ class Player {
   }
 
   onReachExit() {
-    alert("Congratulations! You escaped the wraiths!");
-    window.location.reload();
+    console.log("🏁 GAME END: Player reached exit!");
+    // Trigger victory through the main game instance
+    if (window.game && window.game.gameState === 'playing') {
+      window.game.finishGame(true); // true = player won
+    }
   }
 
   // Check collision with wraiths
@@ -115,9 +118,17 @@ class Player {
       const dy = this.y - wraith.y;
       const dist = Math.sqrt(dx*dx + dy*dy);
       
+      // Add logging to debug collision detection
+      if (dist < this.radius + 20) { // Expanded detection for debugging
+        console.log(`� COLLISIOIN DEBUG: Player(${Math.round(this.x)}, ${Math.round(this.y)}) vs Wraith ${wraith.id}(${Math.round(wraith.x)}, ${Math.round(wraith.y)}) - Distance: ${Math.round(dist)}`);
+      }
+      
       if (dist < this.radius + 12) {
-        alert("You were consumed by the Wraith!");
-        window.location.reload();
+        console.log("💀 GAME END: Player caught by wraith!");
+        // Trigger game over through the main game instance
+        if (window.game && window.game.gameState === 'playing') {
+          window.game.finishGame(false); // false = player lost
+        }
         return true;
       }
     }

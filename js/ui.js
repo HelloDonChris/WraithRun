@@ -62,6 +62,126 @@ class UIManager {
     }, 2000);
   }
 
+  showGameOverModal(isVictory, restartCallback) {
+    console.log(`🎭 UI: Showing game over modal - ${isVictory ? 'Victory' : 'Defeat'}`);
+    
+    // Remove any existing modal
+    const existingModal = document.getElementById('gameOverModal');
+    if (existingModal) {
+      existingModal.remove();
+    }
+
+    // Create modal overlay
+    const modal = document.createElement('div');
+    modal.id = 'gameOverModal';
+    modal.style.cssText = `
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.8);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 10000;
+      font-family: Arial, sans-serif;
+    `;
+
+    // Create modal content
+    const modalContent = document.createElement('div');
+    modalContent.style.cssText = `
+      background: #1a1a1a;
+      border: 3px solid ${isVictory ? '#00ff00' : '#ff0000'};
+      border-radius: 15px;
+      padding: 40px;
+      text-align: center;
+      max-width: 400px;
+      box-shadow: 0 0 30px ${isVictory ? 'rgba(0, 255, 0, 0.3)' : 'rgba(255, 0, 0, 0.3)'};
+    `;
+
+    // Create title
+    const title = document.createElement('h1');
+    title.textContent = isVictory ? '🏆 VICTORY!' : '💀 GAME OVER';
+    title.style.cssText = `
+      color: ${isVictory ? '#00ff00' : '#ff0000'};
+      font-size: 2.5em;
+      margin: 0 0 20px 0;
+      text-shadow: 0 0 10px ${isVictory ? 'rgba(0, 255, 0, 0.5)' : 'rgba(255, 0, 0, 0.5)'};
+    `;
+
+    // Create message
+    const message = document.createElement('p');
+    message.textContent = isVictory ? 
+      'Congratulations! You escaped the wraiths!' : 
+      'You were consumed by the wraiths!';
+    message.style.cssText = `
+      color: white;
+      font-size: 1.2em;
+      margin: 0 0 30px 0;
+      line-height: 1.4;
+    `;
+
+    // Create restart button
+    const restartButton = document.createElement('button');
+    restartButton.textContent = '🔄 PLAY AGAIN';
+    restartButton.style.cssText = `
+      background: ${isVictory ? '#00aa00' : '#aa0000'};
+      color: white;
+      border: none;
+      padding: 15px 30px;
+      font-size: 1.1em;
+      font-weight: bold;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+    `;
+
+    // Add hover effect
+    restartButton.addEventListener('mouseenter', () => {
+      restartButton.style.background = isVictory ? '#00cc00' : '#cc0000';
+      restartButton.style.transform = 'translateY(-2px)';
+      restartButton.style.boxShadow = '0 6px 12px rgba(0, 0, 0, 0.4)';
+    });
+
+    restartButton.addEventListener('mouseleave', () => {
+      restartButton.style.background = isVictory ? '#00aa00' : '#aa0000';
+      restartButton.style.transform = 'translateY(0)';
+      restartButton.style.boxShadow = '0 4px 8px rgba(0, 0, 0, 0.3)';
+    });
+
+    // Add click handler
+    restartButton.addEventListener('click', () => {
+      console.log('🎮 UI: Restart button clicked');
+      modal.remove();
+      restartCallback();
+    });
+
+    // Assemble modal
+    modalContent.appendChild(title);
+    modalContent.appendChild(message);
+    modalContent.appendChild(restartButton);
+    modal.appendChild(modalContent);
+
+    // Add to page
+    document.body.appendChild(modal);
+
+    // Add keyboard support (Enter or Space to restart)
+    const keyHandler = (e) => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        console.log('🎮 UI: Restart triggered by keyboard');
+        modal.remove();
+        document.removeEventListener('keydown', keyHandler);
+        restartCallback();
+      }
+    };
+    document.addEventListener('keydown', keyHandler);
+
+    console.log('✅ UI: Game over modal displayed');
+  }
+
   updateDebugInfo(player, wraiths, fps) {
     // Optional debug information display
     if (window.game && window.game.config.debug) {
@@ -85,13 +205,6 @@ class UIManager {
         document.body.appendChild(debugEl);
       }
       
-      const perfStats = window.game.getPerformanceStats();
-      
-      // Enhanced wraith AI debugging
-      const wraithsWithPaths = wraiths.filter(w => w.path && w.path.length > 0).length;
-      const avgPathLength = wraiths.reduce((sum, w) => sum + (w.path ? w.path.length : 0), 0) / wraiths.length;
-      const stuckWraiths = wraiths.filter(w => w.stuckCounter > 10).length;
-      
       debugEl.innerHTML = `
         <strong>PLAYER</strong><br>
         Position: (${Math.round(player.x)}, ${Math.round(player.y)})<br>
@@ -99,42 +212,17 @@ class UIManager {
         Sprinting: ${player.isSprinting}<br><br>
         
         <strong>PERFORMANCE</strong><br>
-        FPS: ${Math.round(fps)} (Avg: ${perfStats.avgFps})<br>
-        Update: ${perfStats.updateTime.toFixed(1)}ms<br>
-        Render: ${perfStats.renderTime.toFixed(1)}ms<br>
-        Perf Mode: ${perfStats.performanceMode ? 'ON' : 'OFF'}<br><br>
+        FPS: ${Math.round(fps)}<br><br>
         
-        <strong>SMART AI</strong><br>
-        Wraiths: ${wraiths.length}<br>
-        With Paths: ${wraithsWithPaths}/${wraiths.length}<br>
-        Avg Path Length: ${avgPathLength.toFixed(1)}<br>
-        Stuck: ${stuckWraiths}<br><br>
+        <strong>WRAITHS</strong><br>
+        Count: ${wraiths.length}<br><br>
         
         <strong>CONTROLS</strong><br>
-        F1: Toggle Debug (ON)<br>
-        F2: Performance Mode<br>
-        F3: Performance Stats<br>
-        G: New Maze
+        F1: Toggle Debug<br>
+        G: New Maze<br>
+        Ctrl+R: Restart
       `;
     }
-  }
-
-  showPerformanceStats() {
-    if (!window.game) return;
-    
-    const stats = window.game.getPerformanceStats();
-    const message = `
-Performance Statistics:
-• Current FPS: ${stats.currentFps}
-• Average FPS: ${stats.avgFps}
-• Update Time: ${stats.updateTime.toFixed(1)}ms
-• Render Time: ${stats.renderTime.toFixed(1)}ms
-• Performance Mode: ${stats.performanceMode ? 'Enabled' : 'Disabled'}
-
-${stats.avgFps < 45 ? '⚠️ Consider enabling performance mode (F2)' : '✅ Performance is good'}
-    `;
-    
-    this.showMessage(message, 'info');
   }
 
   hide() {
