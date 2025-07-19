@@ -6,7 +6,7 @@ class Game {
     
     // Game state
     this.isRunning = false;
-    this.gameState = 'playing'; // 'playing', 'gameOver', 'victory'
+    this.gameState = 'start'; // 'start', 'playing', 'gameOver', 'victory'
     this.lastTime = 0;
     this.fps = 60;
     
@@ -76,9 +76,11 @@ class Game {
       });
       console.log("✅ GAME INIT: Resize handler set up");
       
-      // Start the game loop
-      console.log("🎮 GAME INIT: Starting game loop...");
-      this.start();
+      // Show simple start modal
+      console.log("🎮 GAME INIT: Showing start modal...");
+      this.ui.showSimpleStartModal(() => {
+        this.startGame();
+      });
       console.log("✅ GAME INIT: Game initialization complete!");
     } catch (error) {
       console.error("Error during game initialization:", error);
@@ -197,13 +199,58 @@ class Game {
     // Reset game state
     this.gameState = 'playing';
     
-    // Reinitialize game systems
-    this.map = new Map(this.config.mapWidth, this.config.mapHeight);
+    // Generate new map with recursive backtracking
+    this.map.generateRecursiveBacktrackingMaze();
+    
+    // Reset player and wraiths
     const startPos = this.map.getPlayerStartPosition();
-    this.player = new Player(startPos.x, startPos.y);
+    this.player.x = startPos.x;
+    this.player.y = startPos.y;
+    this.player.energy = this.player.maxEnergy;
     this.wraithManager = new WraithManager(this.config.mapWidth, this.config.mapHeight, this.map);
     
     console.log("✅ RESTART: Game restarted successfully");
+  }
+
+  // Start the game
+  startGame() {
+    console.log("🎮 GAME START: Starting game");
+    this.gameState = 'playing';
+    
+    // Generate new map with recursive backtracking
+    this.map.generateRecursiveBacktrackingMaze();
+    
+    // Reset player and wraiths
+    const startPos = this.map.getPlayerStartPosition();
+    this.player.x = startPos.x;
+    this.player.y = startPos.y;
+    this.player.energy = this.player.maxEnergy;
+    this.wraithManager = new WraithManager(this.config.mapWidth, this.config.mapHeight, this.map);
+    
+    // Show redraw map button
+    this.ui.showRedrawMapButton(() => {
+      this.redrawMap();
+    });
+    
+    // Start the game loop
+    this.start();
+  }
+
+  // Redraw map during gameplay
+  redrawMap() {
+    console.log("🔄 REDRAW: Redrawing map");
+    
+    // Generate new map with recursive backtracking
+    this.map.generateRecursiveBacktrackingMaze();
+    
+    // Reset player position
+    const startPos = this.map.getPlayerStartPosition();
+    this.player.x = startPos.x;
+    this.player.y = startPos.y;
+    this.player.energy = this.player.maxEnergy;
+    
+    // Respawn wraiths
+    this.wraithManager = new WraithManager(this.config.mapWidth, this.config.mapHeight, this.map);
   }
 
   // Toggle debug mode
@@ -216,21 +263,9 @@ class Game {
     this.restartGame();
   }
 
-  // Generate new map without restarting game
+  // Generate new map without restarting game (legacy method for G key)
   generateNewMap() {
-    console.log("Generating new map...");
-    this.map = new Map(this.config.mapWidth, this.config.mapHeight);
-    
-    // Move player to new entrance
-    const startPos = this.map.getPlayerStartPosition();
-    this.player.x = startPos.x;
-    this.player.y = startPos.y;
-    this.player.energy = this.player.maxEnergy; // Restore energy
-    
-    // Respawn wraiths with the new map
-    this.wraithManager = new WraithManager(this.config.mapWidth, this.config.mapHeight, this.map);
-    
-    this.ui.showMessage("New map generated! Press G to generate another.", 'info');
+    this.redrawMap();
   }
 
   // Resize canvas to fill screen
@@ -252,62 +287,6 @@ class Game {
 
 // Global game instance
 let game;
-
-// Track network requests that might cause loading spinner
-let networkRequestCount = 0;
-const originalFetch = window.fetch;
-window.fetch = function(...args) {
-  networkRequestCount++;
-  console.log(`🌐 NETWORK: Request #${networkRequestCount} - ${args[0]}`);
-  return originalFetch.apply(this, args);
-};
-
-// Track setInterval and setTimeout
-let intervalCount = 0;
-let timeoutCount = 0;
-const originalSetInterval = window.setInterval;
-const originalSetTimeout = window.setTimeout;
-
-window.setInterval = function(callback, delay) {
-  intervalCount++;
-  console.log(`⏰ INTERVAL: Created interval #${intervalCount} with delay ${delay}ms`);
-  return originalSetInterval.apply(this, arguments);
-};
-
-window.setTimeout = function(callback, delay) {
-  timeoutCount++;
-  console.log(`⏰ TIMEOUT: Created timeout #${timeoutCount} with delay ${delay}ms`);
-  return originalSetTimeout.apply(this, arguments);
-};
-
-// Track XMLHttpRequest
-const originalXHR = window.XMLHttpRequest;
-window.XMLHttpRequest = function() {
-  const xhr = new originalXHR();
-  const originalOpen = xhr.open;
-  xhr.open = function(method, url) {
-    console.log(`🌐 XHR: ${method} ${url}`);
-    return originalOpen.apply(this, arguments);
-  };
-  return xhr;
-};
-
-// Track image loading
-const originalImage = window.Image;
-window.Image = function() {
-  const img = new originalImage();
-  const originalSrc = Object.getOwnPropertyDescriptor(HTMLImageElement.prototype, 'src');
-  Object.defineProperty(img, 'src', {
-    set: function(value) {
-      console.log(`🖼️ IMAGE: Loading ${value}`);
-      originalSrc.set.call(this, value);
-    },
-    get: function() {
-      return originalSrc.get.call(this);
-    }
-  });
-  return img;
-};
 
 // Initialize the game when the page loads
 document.addEventListener('DOMContentLoaded', () => {

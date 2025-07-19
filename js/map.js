@@ -11,18 +11,18 @@ class Map {
   }
 
   generate() {
-    console.log("Generating simple maze...");
+    console.log("Generating recursive backtracking maze...");
+    this.generateRecursiveBacktrackingMaze();
+  }
+
+  generateRecursiveBacktrackingMaze() {
+    console.log("🔧 MAZE: Generating recursive backtracking maze...");
 
     // Clear existing data
     this.walls = [];
     this.safeRooms = [];
 
-    // Create maze
-    this.createSimpleMaze();
-    this.addSafeRooms();
-  }
-
-  createSimpleMaze() {
+    // Setup basic maze parameters
     const cellSize = 40;
     this.cellSize = cellSize;
     this.gridWidth = 18;
@@ -33,32 +33,110 @@ class Map {
     this.mazeOffsetX = (this.width - this.mazeWidth) / 2;
     this.mazeOffsetY = (this.height - this.mazeHeight) / 2;
 
-    // Create grid
-    this.createGrid();
+    // Generate maze using recursive backtracking
+    this.createRecursiveBacktrackingMaze();
+
+    // Post-processing
     this.createEntranceExit();
+    this.ensureConnectivity();
     this.createWraithSpawnRooms();
     this.convertGridToWalls();
+    this.addSafeRooms();
+
+    console.log("✅ MAZE: Recursive backtracking maze generated successfully");
   }
 
-  createGrid() {
+
+
+  createRecursiveBacktrackingMaze() {
+    // Initialize all cells as walls
+    this.initializeAllWalls();
+
+    const stack = [];
+    const visited = new Set();
+
+    // Start from center top
+    const start = { x: Math.floor(this.gridWidth / 2), y: 1 };
+    stack.push(start);
+    visited.add(`${start.x},${start.y}`);
+    this.grid[start.y][start.x] = false;
+
+    while (stack.length > 0) {
+      const current = stack[stack.length - 1];
+      const neighbors = this.getUnvisitedNeighbors(current, visited);
+
+      if (neighbors.length > 0) {
+        const next = neighbors[Math.floor(Math.random() * neighbors.length)];
+        this.removeWallBetween(current, next);
+        visited.add(`${next.x},${next.y}`);
+        stack.push(next);
+      } else {
+        stack.pop();
+      }
+    }
+  }
+
+  // Helper methods for maze generation
+  initializeAllWalls() {
     this.grid = [];
     for (let y = 0; y < this.gridHeight; y++) {
       this.grid[y] = [];
       for (let x = 0; x < this.gridWidth; x++) {
-        if (x === 0 || y === 0 || x === this.gridWidth - 1 || y === this.gridHeight - 1) {
-          this.grid[y][x] = true; // Wall
-        } else {
-          this.grid[y][x] = false; // Path
-        }
+        this.grid[y][x] = true; // All walls initially
+      }
+    }
+  }
+
+  getUnvisitedNeighbors(cell, visited) {
+    const neighbors = [];
+    const directions = [
+      { dx: 0, dy: -2 }, { dx: 2, dy: 0 },
+      { dx: 0, dy: 2 }, { dx: -2, dy: 0 }
+    ];
+
+    for (const dir of directions) {
+      const nx = cell.x + dir.dx;
+      const ny = cell.y + dir.dy;
+
+      if (nx > 0 && nx < this.gridWidth - 1 &&
+        ny > 0 && ny < this.gridHeight - 1 &&
+        !visited.has(`${nx},${ny}`)) {
+        neighbors.push({ x: nx, y: ny });
       }
     }
 
-    // Add some obstacles for interest
-    for (let y = 2; y < this.gridHeight - 2; y += 2) {
-      for (let x = 2; x < this.gridWidth - 2; x += 2) {
-        this.grid[y][x] = true;
-      }
+    return neighbors;
+  }
+
+  removeWallBetween(cell1, cell2) {
+    const wallX = (cell1.x + cell2.x) / 2;
+    const wallY = (cell1.y + cell2.y) / 2;
+    this.grid[wallY][wallX] = false;
+    this.grid[cell2.y][cell2.x] = false;
+  }
+
+
+
+  // Ensure entrance and exit are connected to the maze
+  ensureConnectivity() {
+    const centerX = Math.floor(this.gridWidth / 2);
+
+    // Only ensure minimal connectivity - just entrance and exit access
+    // Don't create a full spine that might override the maze algorithm
+
+    // Ensure entrance connectivity (just 2 cells down)
+    this.grid[1][centerX] = false;
+    if (this.gridHeight > 3) {
+      this.grid[2][centerX] = false;
     }
+
+    // Ensure exit connectivity (just 2 cells up)
+    this.grid[this.gridHeight - 2][centerX] = false;
+    if (this.gridHeight > 3) {
+      this.grid[this.gridHeight - 3][centerX] = false;
+    }
+
+    console.log(`🔗 CONNECTIVITY: Ensured minimal connectivity for entrance/exit at column ${centerX}`);
   }
 
   createEntranceExit() {
@@ -180,7 +258,7 @@ class Map {
   }
 
   // === COLLISION DETECTION (Used by Player & Wraiths) ===
-  
+
   isWall(px, py) {
     if (!this.grid || !this.gridWidth || !this.gridHeight) {
       return true;
@@ -219,7 +297,7 @@ class Map {
   }
 
   // === GAME STATE CHECKS (Used by Player) ===
-  
+
   isInSafeRoom(px, py) {
     return this.safeRooms.some(r => {
       return (
@@ -244,7 +322,7 @@ class Map {
   }
 
   // === RENDERING ===
-  
+
   draw(ctx, camera) {
     // Draw background
     ctx.fillStyle = "#333";

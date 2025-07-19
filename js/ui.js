@@ -63,7 +63,7 @@ class UIManager {
   }
 
   showGameOverModal(isVictory, restartCallback) {
-    console.log(`🎭 UI: Showing game over modal - ${isVictory ? 'Victory' : 'Defeat'}`);
+    console.log(`🎭 UI: Showing simple game over modal - ${isVictory ? 'Victory' : 'Defeat'}`);
     
     // Remove any existing modal
     const existingModal = document.getElementById('gameOverModal');
@@ -129,13 +129,14 @@ class UIManager {
       background: ${isVictory ? '#00aa00' : '#aa0000'};
       color: white;
       border: none;
-      padding: 15px 30px;
-      font-size: 1.1em;
+      padding: 20px 40px;
+      font-size: 1.3em;
       font-weight: bold;
-      border-radius: 8px;
+      border-radius: 10px;
       cursor: pointer;
       transition: all 0.3s ease;
       box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+      width: 100%;
     `;
 
     // Add hover effect
@@ -179,7 +180,176 @@ class UIManager {
     };
     document.addEventListener('keydown', keyHandler);
 
-    console.log('✅ UI: Game over modal displayed');
+    console.log('✅ UI: Simple game over modal displayed');
+  }
+
+  showSimpleStartModal(startCallback) {
+    console.log('🎭 UI: Showing simple start modal');
+    
+    // Create modal overlay
+    const modal = document.createElement('div');
+    modal.id = 'startModal';
+    modal.style.cssText = `
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.9);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 10000;
+      font-family: Arial, sans-serif;
+    `;
+
+    // Create modal content
+    const modalContent = document.createElement('div');
+    modalContent.style.cssText = `
+      background: #1a1a1a;
+      border: 3px solid #00ffff;
+      border-radius: 15px;
+      padding: 40px;
+      text-align: center;
+      max-width: 400px;
+      box-shadow: 0 0 30px rgba(0, 255, 255, 0.3);
+    `;
+
+    // Create title
+    const title = document.createElement('h1');
+    title.textContent = '👻 WRAITH RUN';
+    title.style.cssText = `
+      color: #00ffff;
+      font-size: 3em;
+      margin: 0 0 20px 0;
+      text-shadow: 0 0 15px rgba(0, 255, 255, 0.5);
+    `;
+
+    // Create description
+    const description = document.createElement('p');
+    description.textContent = 'Escape the wraiths through the maze!';
+    description.style.cssText = `
+      color: white;
+      font-size: 1.2em;
+      margin: 0 0 30px 0;
+      line-height: 1.4;
+    `;
+
+    // Create start button
+    const startButton = document.createElement('button');
+    startButton.textContent = '🚀 START GAME';
+    startButton.style.cssText = `
+      background: #00aa00;
+      color: white;
+      border: none;
+      padding: 20px 40px;
+      font-size: 1.3em;
+      font-weight: bold;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+      width: 100%;
+    `;
+
+    // Add hover effect
+    startButton.addEventListener('mouseenter', () => {
+      startButton.style.background = '#00cc00';
+      startButton.style.transform = 'translateY(-2px)';
+      startButton.style.boxShadow = '0 6px 12px rgba(0, 0, 0, 0.4)';
+    });
+
+    startButton.addEventListener('mouseleave', () => {
+      startButton.style.background = '#00aa00';
+      startButton.style.transform = 'translateY(0)';
+      startButton.style.boxShadow = '0 4px 8px rgba(0, 0, 0, 0.3)';
+    });
+
+    // Add click handler
+    startButton.addEventListener('click', () => {
+      console.log('🎮 UI: Start button clicked');
+      modal.remove();
+      startCallback();
+    });
+
+    // Assemble modal
+    modalContent.appendChild(title);
+    modalContent.appendChild(description);
+    modalContent.appendChild(startButton);
+    modal.appendChild(modalContent);
+
+    // Add to page
+    document.body.appendChild(modal);
+
+    // Add keyboard support (Enter to start)
+    const keyHandler = (e) => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        console.log('🎮 UI: Start triggered by keyboard');
+        modal.remove();
+        document.removeEventListener('keydown', keyHandler);
+        startCallback();
+      }
+    };
+    document.addEventListener('keydown', keyHandler);
+
+    console.log('✅ UI: Simple start modal displayed');
+  }
+
+  showRedrawMapButton(redrawCallback) {
+    console.log('🎭 UI: Showing redraw map button');
+    
+    // Remove existing button
+    const existingButton = document.getElementById('redrawMapButton');
+    if (existingButton) {
+      existingButton.remove();
+    }
+
+    // Create redraw map button
+    const redrawButton = document.createElement('button');
+    redrawButton.id = 'redrawMapButton';
+    redrawButton.textContent = '🗺️ REDRAW MAP';
+    redrawButton.style.cssText = `
+      position: fixed;
+      top: 80px;
+      left: 20px;
+      z-index: 1000;
+      background: #FF9800;
+      color: white;
+      border: none;
+      padding: 12px 18px;
+      font-size: 0.9em;
+      font-weight: bold;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      box-shadow: 0 3px 6px rgba(0, 0, 0, 0.3);
+      min-width: 120px;
+    `;
+
+    // Add hover effect
+    redrawButton.addEventListener('mouseenter', () => {
+      redrawButton.style.background = '#F57C00';
+      redrawButton.style.transform = 'translateX(5px)';
+      redrawButton.style.boxShadow = '0 5px 10px rgba(0, 0, 0, 0.4)';
+    });
+
+    redrawButton.addEventListener('mouseleave', () => {
+      redrawButton.style.background = '#FF9800';
+      redrawButton.style.transform = 'translateX(0)';
+      redrawButton.style.boxShadow = '0 3px 6px rgba(0, 0, 0, 0.3)';
+    });
+
+    // Add click handler
+    redrawButton.addEventListener('click', () => {
+      console.log('🎮 UI: Redraw map button clicked');
+      redrawCallback();
+    });
+
+    // Add to page
+    document.body.appendChild(redrawButton);
+
+    console.log('✅ UI: Redraw map button displayed');
   }
 
   updateDebugInfo(player, wraiths, fps) {

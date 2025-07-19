@@ -25,10 +25,10 @@ class Wraith {
     if (dist > 0) {
       const normalizedDx = dx / dist;
       const normalizedDy = dy / dist;
-      
+
       let newX = this.x + normalizedDx * this.speed;
       let newY = this.y + normalizedDy * this.speed;
-      
+
       // Simple wall avoidance - try alternative directions if blocked
       if (map.isWall(newX, newY)) {
         if (!map.isWall(this.x + normalizedDx * this.speed, this.y)) {
@@ -45,7 +45,7 @@ class Wraith {
           newY = this.y;
         }
       }
-      
+
       this.x = newX;
       this.y = newY;
     }
@@ -57,18 +57,18 @@ class Wraith {
     ctx.arc(this.x, this.y, this.radius + 5, 0, Math.PI * 2);
     ctx.fillStyle = "rgba(139, 0, 0, 0.3)";
     ctx.fill();
-    
+
     // Draw main wraith body
     ctx.beginPath();
     ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
     ctx.fillStyle = "#1a1a1a";
     ctx.fill();
-    
+
     // Add red glow outline
     ctx.strokeStyle = "#8B0000";
     ctx.lineWidth = 3;
     ctx.stroke();
-    
+
     // Draw wraith ID in debug mode
     if (window.game && window.game.config.debug) {
       ctx.fillStyle = "white";
@@ -92,34 +92,34 @@ class WraithManager {
       return;
     }
 
-    const speeds = [1.5, 1.3, 1.7]; // Different speeds for variety
-    
+    const speeds = [0.8, 0.6, 0.9]; // Slower speeds for better gameplay
+
     // Spawn one wraith in each dedicated spawn room
     for (let i = 0; i < Math.min(3, map.wraithSpawnRooms.length); i++) {
       const room = map.wraithSpawnRooms[i];
-      
+
       // Calculate world position from grid coordinates
       const worldX = map.mazeOffsetX + (room.gridX * map.cellSize) + (map.cellSize / 2);
       const worldY = map.mazeOffsetY + (room.gridY * map.cellSize) + (map.cellSize / 2);
-      
+
       const wraith = new Wraith(worldX, worldY, i);
       wraith.speed = speeds[i] || 1.0;
       this.wraiths.push(wraith);
-      
+
       console.log(`Wraith ${i} spawned at (${Math.round(worldX)}, ${Math.round(worldY)})`);
     }
   }
 
   spawnWraithsFallback(mapWidth, mapHeight, map) {
     const wraithCount = 3;
-    const speeds = [1.5, 1.3, 1.7];
-    
+    const speeds = [0.8, 0.6, 0.9]; // Slower speeds for better gameplay
+
     let fallbackPositions;
     if (map && map.mazeOffsetX && map.mazeOffsetY) {
       // Spawn within the centered maze area
       const centerX = map.mazeOffsetX + map.mazeWidth / 2;
       const centerY = map.mazeOffsetY + map.mazeHeight / 2;
-      
+
       fallbackPositions = [
         { x: centerX - 100, y: centerY + 50 },
         { x: centerX + 100, y: centerY + 50 },
@@ -133,13 +133,13 @@ class WraithManager {
         { x: mapWidth * 0.8, y: mapHeight * 0.5 }
       ];
     }
-    
+
     for (let i = 0; i < wraithCount; i++) {
       const pos = fallbackPositions[i];
       const wraith = new Wraith(pos.x, pos.y, i);
       wraith.speed = speeds[i] || 1.0;
       this.wraiths.push(wraith);
-      
+
       console.log(`Wraith ${i} spawned at fallback position (${pos.x}, ${pos.y})`);
     }
   }
@@ -154,9 +154,9 @@ class WraithManager {
     for (const wraith of this.wraiths) {
       // Only draw if in camera view for performance
       if (camera.isInView({
-        x: wraith.x - wraith.radius, 
-        y: wraith.y - wraith.radius, 
-        width: wraith.radius * 2, 
+        x: wraith.x - wraith.radius,
+        y: wraith.y - wraith.radius,
+        width: wraith.radius * 2,
         height: wraith.radius * 2
       })) {
         wraith.draw(ctx);
